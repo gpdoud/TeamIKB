@@ -48,6 +48,19 @@ namespace IKBExpenseDb.Controllers
 
             return expense;
         }
+        // GET: api/Expenses/approved
+        [HttpGet("approved")]
+        public async Task<ActionResult<IEnumerable<Expense>>> GetApprovedExpense()
+        {
+            return await _context.Expenses.Include(x => x.Status == APPROVED).ToListAsync();
+        }
+        // GET: api/Expenses/review
+        [HttpGet("review")]
+        public async Task<ActionResult<IEnumerable<Expense>>> GetExpenseInReview()
+        {
+            return await _context.Expenses.Include(x => x.Status == REVIEW).ToListAsync();
+        }
+
 
         // PUT: api/Expenses/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -79,7 +92,7 @@ namespace IKBExpenseDb.Controllers
 
             return NoContent();
         }
-        // Put: api/expenses/pay/5
+        // PUT: api/Expenses/pay/5
         [HttpPut("pay/{expenseId}")]
         public async Task<IActionResult> PayExpense(int expenseId)
         {
@@ -104,7 +117,7 @@ namespace IKBExpenseDb.Controllers
             return Ok();
         }
 
-        // api/expenses/review/5
+        // PUT: api/Expenses/review/5
         [HttpPut("review/{id}")]
         public async Task<IActionResult> ReviewExpense(int id, Expense expense)
         {
@@ -113,7 +126,7 @@ namespace IKBExpenseDb.Controllers
             return await PutExpense(id, expense);
         }
 
-        // api/expenses/approve/5
+        // PUT: api/Expenses/approve/5
         [HttpPut("approve/{id}")]
         public async Task<IActionResult> ApproveExpense(int id, Expense expense)
         {
@@ -122,7 +135,7 @@ namespace IKBExpenseDb.Controllers
             return await PutExpense(id, expense);
         }
 
-        // api/expenses/reject/5
+        // PUT: api/Expenses/reject/5
         [HttpPut("reject/{id}")]
         public async Task<IActionResult> RejectExpense(int id, Expense expense)
         {
@@ -130,9 +143,9 @@ namespace IKBExpenseDb.Controllers
             return await PutExpense(id, expense);
         }
 
-            // POST: api/Expenses
-            // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-            [HttpPost]
+        // POST: api/Expenses
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
         public async Task<ActionResult<Expense>> PostExpense(Expense expense)
         {
             _context.Expenses.Add(expense);
