@@ -131,7 +131,7 @@ namespace IKBExpenseDb.Controllers
         public async Task<IActionResult> ApproveExpense(int id, Expense expense)
         {
             expense.Status = APPROVED;
-           
+            await UpdateEmployeeExpensesDueAndPaid(expense.EmployeeId);
             return await PutExpense(id, expense);
         }
 
