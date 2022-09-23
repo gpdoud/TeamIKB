@@ -125,6 +125,7 @@ namespace IKBExpenseDb.Migrations
 
                     b.Navigation("Employee");
                 });
+
 #pragma warning restore 612, 618
         }
     }
