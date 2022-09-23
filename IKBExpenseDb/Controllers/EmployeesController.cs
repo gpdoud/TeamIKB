@@ -41,6 +41,20 @@ namespace IKBExpenseDb.Controllers
             return employee;
         }
 
+        //Login Method, GET: /api/user/email/password
+
+        [HttpGet("{email}/{password}")]
+        public async Task<ActionResult<Employee>> Login(string email, string password)
+        {
+            var empl = await _context.Employees
+                                        .SingleOrDefaultAsync(x => x.Email == email && x.Password == password);
+            if (empl is null)
+            {
+                return NotFound();
+            }
+            return empl;
+        }
+
         // PUT: api/Employees/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
