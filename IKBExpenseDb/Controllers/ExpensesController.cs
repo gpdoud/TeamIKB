@@ -150,7 +150,6 @@ namespace IKBExpenseDb.Controllers
         {
             _context.Expenses.Add(expense);
             await _context.SaveChangesAsync();
-            await UpdateEmployeeExpensesDueAndPaid(expense.EmployeeId);
             return CreatedAtAction("GetExpense", new { id = expense.Id }, expense);
         }
 
