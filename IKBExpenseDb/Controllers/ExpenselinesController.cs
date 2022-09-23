@@ -56,6 +56,7 @@ namespace IKBExpenseDb.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                await RecalculateExpenseTotal(expenseline.ExpenseId);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -79,6 +80,7 @@ namespace IKBExpenseDb.Controllers
         {
             _context.Expenselines.Add(expenseline);
             await _context.SaveChangesAsync();
+            await RecalculateExpenseTotal(expenseline.ExpenseId);
 
             return CreatedAtAction("GetExpenseline", new { id = expenseline.Id }, expenseline);
         }
@@ -95,8 +97,29 @@ namespace IKBExpenseDb.Controllers
 
             _context.Expenselines.Remove(expenseline);
             await _context.SaveChangesAsync();
-
+            await RecalculateExpenseTotal(expenseline.ExpenseId);
             return NoContent();
+        }
+
+        //RecalculateExpenseTotal is only called by Expenselines Methods that modify data.
+        private async Task<IActionResult> RecalculateExpenseTotal(int expenseId)
+        {
+            var expense = await _context.Expenses.FindAsync(expenseId);
+            if(expense is null)
+            {
+                return NotFound();
+            }
+            expense.Total = (from l in _context.Expenselines
+                             join i in _context.Items
+                             on l.ItemId equals i.Id
+                             where i.Id == expenseId
+                             select new
+                             {
+                                 Subtotal = l.Quantity * i.Price
+                             }).Sum(x => x.Subtotal);
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         private bool ExpenselineExists(int id)
