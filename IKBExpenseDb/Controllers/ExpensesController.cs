@@ -71,6 +71,30 @@ namespace IKBExpenseDb.Controllers
 
             return NoContent();
         }
+        // Put: api/expenses/pay/5
+        [HttpPut("pay/{expenseId}")]
+        public async Task<IActionResult> PayExpense(int expenseId)
+        {
+            var exp = await _context.Expenses.FindAsync(expenseId);
+            if (exp is null)
+            {
+                return NotFound();
+            }
+            if (exp.Status != "APPROVED")
+            {
+                return BadRequest();
+            }
+            exp.Status = "PAID";
+            var empl = await _context.Employees.FindAsync(exp.EmployeeId);
+            if (empl is null)
+            {
+                throw new Exception("Corrupted FK in expense");
+            }
+            empl.ExpensesDue -= exp.Total;
+            empl.ExpensesPaid += exp.Total;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
 
         // POST: api/Expenses
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
