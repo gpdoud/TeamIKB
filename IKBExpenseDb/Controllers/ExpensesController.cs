@@ -13,6 +13,14 @@ namespace IKBExpenseDb.Controllers
     [ApiController]
     public class ExpensesController : ControllerBase
     {
+
+        public static string NEW = "NEW";
+        public static string MODIFIED = "MODIFIED";
+        public static string APPROVED = "APPROVED";
+        public static string REJECTED = "REJECTED";
+        public static string REVIEW = "REVIEW";
+        public static string PAID = "PAID";
+
         private readonly AppDbContext _context;
 
         public ExpensesController(AppDbContext context)
@@ -80,11 +88,11 @@ namespace IKBExpenseDb.Controllers
             {
                 return NotFound();
             }
-            if (exp.Status != "APPROVED")
+            if (exp.Status != APPROVED)
             {
                 return BadRequest();
             }
-            exp.Status = "PAID";
+            exp.Status = PAID;
             var empl = await _context.Employees.FindAsync(exp.EmployeeId);
             if (empl is null)
             {
@@ -96,9 +104,33 @@ namespace IKBExpenseDb.Controllers
             return Ok();
         }
 
-        // POST: api/Expenses
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        // api/expenses/review/5
+        [HttpPut("review/{id}")]
+        public async Task<IActionResult> ReviewExpense(int id, Expense expense)
+        {
+            expense.Status = (expense.Total <= 75) ? APPROVED : REVIEW;
+            return await PutExpense(id, expense);
+        }
+
+        // api/expenses/approve/5
+        [HttpPut("approve/{id}")]
+        public async Task<IActionResult> ApproveExpense(int id, Expense expense)
+        {
+            expense.Status = APPROVED;
+            return await PutExpense(id, expense);
+        }
+
+        // api/expenses/reject/5
+        [HttpPut("reject/{id}")]
+        public async Task<IActionResult> RejectExpense(int id, Expense expense)
+        {
+            expense.Status = REJECTED;
+            return await PutExpense(id, expense);
+        }
+
+            // POST: api/Expenses
+            // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+            [HttpPost]
         public async Task<ActionResult<Expense>> PostExpense(Expense expense)
         {
             _context.Expenses.Add(expense);
