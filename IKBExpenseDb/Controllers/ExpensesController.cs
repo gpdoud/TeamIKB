@@ -99,6 +99,40 @@ namespace IKBExpenseDb.Controllers
             return NoContent();
         }
 
+        private async Task<IActionResult> UpdateEmployeeExpensesDueAndPaid(int employeeId)
+        {
+            var employee = await _context.Employees.FindAsync(employeeId);
+            if(employee is null)
+            {
+                return NotFound();
+            }
+
+            employee.ExpensesDue = (from l in _context.Expenselines
+                                    join e in _context.Expenses
+                                    on l.ExpenseId equals e.Id
+                                    join i in _context.Items
+                                    on l.ItemId equals i.Id
+                                    where employee.Id == employeeId && e.Status == "APPROVED"
+                                    select new
+                                    {
+                                        Subtotal = l.Quantity * i.Price
+                                    }).Sum(x => x.Subtotal);
+            
+            employee.ExpensesPaid = (from l in _context.Expenselines
+                                    join e in _context.Expenses
+                                    on l.ExpenseId equals e.Id
+                                    join i in _context.Items
+                                    on l.ItemId equals i.Id
+                                    where employee.Id == employeeId && e.Status == "PAID"
+                                    select new
+                                    {
+                                        Subtotal = l.Quantity * i.Price
+                                    }).Sum(x => x.Subtotal);
+
+
+            return Ok();
+        }
+
         private bool ExpenseExists(int id)
         {
             return _context.Expenses.Any(e => e.Id == id);
