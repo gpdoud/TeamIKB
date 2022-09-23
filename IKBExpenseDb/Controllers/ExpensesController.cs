@@ -109,6 +109,7 @@ namespace IKBExpenseDb.Controllers
         public async Task<IActionResult> ReviewExpense(int id, Expense expense)
         {
             expense.Status = (expense.Total <= 75) ? APPROVED : REVIEW;
+            await UpdateEmployeeExpensesDueAndPaid(expense.EmployeeId);
             return await PutExpense(id, expense);
         }
 
@@ -117,6 +118,7 @@ namespace IKBExpenseDb.Controllers
         public async Task<IActionResult> ApproveExpense(int id, Expense expense)
         {
             expense.Status = APPROVED;
+           
             return await PutExpense(id, expense);
         }
 
@@ -135,7 +137,7 @@ namespace IKBExpenseDb.Controllers
         {
             _context.Expenses.Add(expense);
             await _context.SaveChangesAsync();
-
+            await UpdateEmployeeExpensesDueAndPaid(expense.EmployeeId);
             return CreatedAtAction("GetExpense", new { id = expense.Id }, expense);
         }
 
@@ -151,8 +153,42 @@ namespace IKBExpenseDb.Controllers
 
             _context.Expenses.Remove(expense);
             await _context.SaveChangesAsync();
-
+            await UpdateEmployeeExpensesDueAndPaid(expense.EmployeeId);
             return NoContent();
+        }
+
+        private async Task<IActionResult> UpdateEmployeeExpensesDueAndPaid(int employeeId)
+        {
+            var employee = await _context.Employees.FindAsync(employeeId);
+            if(employee is null)
+            {
+                return NotFound();
+            }
+
+            employee.ExpensesDue = (from l in _context.Expenselines
+                                    join e in _context.Expenses
+                                    on l.ExpenseId equals e.Id
+                                    join i in _context.Items
+                                    on l.ItemId equals i.Id
+                                    where employee.Id == employeeId && e.Status == APPROVED
+                                    select new
+                                    {
+                                        Subtotal = l.Quantity * i.Price
+                                    }).Sum(x => x.Subtotal);
+            
+            employee.ExpensesPaid = (from l in _context.Expenselines
+                                    join e in _context.Expenses
+                                    on l.ExpenseId equals e.Id
+                                    join i in _context.Items
+                                    on l.ItemId equals i.Id
+                                    where employee.Id == employeeId && e.Status == PAID
+                                    select new
+                                    {
+                                        Subtotal = l.Quantity * i.Price
+                                    }).Sum(x => x.Subtotal);
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         private bool ExpenseExists(int id)
